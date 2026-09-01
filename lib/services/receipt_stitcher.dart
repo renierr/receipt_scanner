@@ -12,16 +12,15 @@ class ReceiptStitcher {
       final image = img.decodeImage(
         await File(segment.imagePath).readAsBytes(),
       );
-      if (image == null)
+      if (image == null) {
         throw const FormatException('Unsupported image format');
+      }
       images.add(img.bakeOrientation(image));
     }
-    final contentWidth =
-        images
-                .map((image) => image.width)
-                .reduce((a, b) => a < b ? a : b)
-                .clamp(800, 1600)
-            as int;
+    final contentWidth = images
+        .map((image) => image.width)
+        .reduce((a, b) => a < b ? a : b)
+        .clamp(800, 1600);
     for (var index = 0; index < images.length; index++) {
       images[index] = img.copyResize(images[index], width: contentWidth);
     }

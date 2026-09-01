@@ -69,8 +69,9 @@ class _ReceiptCameraPageState extends State<ReceiptCameraPage> {
   @override
   Widget build(BuildContext context) {
     final controller = _controller;
-    if (controller == null)
+    if (controller == null) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
     return Scaffold(
       body: Stack(
         fit: StackFit.expand,

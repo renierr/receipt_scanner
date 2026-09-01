@@ -16,8 +16,10 @@ class ReceiptParser {
     final candidates = <ReceiptItem>[];
     for (var index = 0; index < lines.length; index++) {
       final line = lines[index].text.replaceAll(RegExp(r'\s+'), ' ').trim();
+      // Trailing tag covers VAT-rate letters/markers many receipts print after
+      // the price (e.g. "1,29 A", "2,99*"); it is not part of the price itself.
       final price = RegExp(
-        r'(?:\d{1,3}(?:[ .]\d{3})*[,\.]\d{2})\s*(?:\p{Sc}|[A-Z]{3})?$',
+        r'(\d{1,3}(?:[ .]\d{3})*[,\.]\d{2}\s*(?:\p{Sc}|[A-Z]{3})?)[\sA-Za-z*]{0,4}$',
         unicode: true,
       ).firstMatch(line);
       if (line.isEmpty || price == null) continue;
@@ -28,13 +30,14 @@ class ReceiptParser {
         name = lines[index - 1].text.trim();
       }
       name = name.replaceFirst(RegExp(r'^\d+(?:[.,]\d+)?\s*[xX*]\s*'), '');
-      if (name.length < 2 || RegExp(r'^\d+(?:[ .,/:-]\d+)*$').hasMatch(name))
+      if (name.length < 2 || RegExp(r'^\d+(?:[ .,/:-]\d+)*$').hasMatch(name)) {
         continue;
+      }
       candidates.add(
         ReceiptItem(
           name: name,
-          cents: _parseCents(price.group(0)!),
-          priceText: price.group(0)!.trim(),
+          cents: _parseCents(price.group(1)!),
+          priceText: price.group(1)!.trim(),
         ),
       );
     }
