@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 
@@ -23,18 +25,32 @@ class _ReceiptCameraPageState extends State<ReceiptCameraPage> {
   Future<void> _initialize() async {
     try {
       final cameras = await availableCameras();
-      final camera = cameras.firstWhere(
-        (item) => item.lensDirection == CameraLensDirection.back,
-        orElse: () => cameras.first,
-      );
+      if (cameras.isEmpty) {
+        throw CameraException('NoCamera', 'No camera found');
+      }
+      final CameraDescription camera;
+      if (Platform.isAndroid) {
+        camera = cameras.firstWhere(
+          (item) => item.lensDirection == CameraLensDirection.back,
+          orElse: () => cameras.first,
+        );
+      } else {
+        camera = cameras.first;
+      }
       final controller = CameraController(
         camera,
         ResolutionPreset.veryHigh,
         enableAudio: false,
       );
       await controller.initialize();
-      await controller.setFocusMode(FocusMode.auto);
-      await controller.setExposureMode(ExposureMode.auto);
+      if (Platform.isAndroid) {
+        try {
+          await controller.setFocusMode(FocusMode.auto);
+          await controller.setExposureMode(ExposureMode.auto);
+        } on CameraException {
+          // Keep the preview usable on devices without auto modes.
+        }
+      }
       if (mounted) setState(() => _controller = controller);
     } catch (_) {
       if (mounted) Navigator.of(context).pop();
@@ -54,9 +70,13 @@ class _ReceiptCameraPageState extends State<ReceiptCameraPage> {
 
   Future<void> _toggleTorch() async {
     final controller = _controller;
-    if (controller == null) return;
+    if (controller == null || !Platform.isAndroid) return;
     _torchOn = !_torchOn;
-    await controller.setFlashMode(_torchOn ? FlashMode.torch : FlashMode.off);
+    try {
+      await controller.setFlashMode(_torchOn ? FlashMode.torch : FlashMode.off);
+    } on CameraException {
+      _torchOn = !_torchOn;
+    }
     if (mounted) setState(() {});
   }
 
@@ -78,14 +98,15 @@ class _ReceiptCameraPageState extends State<ReceiptCameraPage> {
         children: [
           CameraPreview(controller),
           const Center(child: _ReceiptFrame()),
-          Positioned(
-            top: 48,
-            right: 16,
-            child: IconButton.filledTonal(
-              onPressed: _toggleTorch,
-              icon: Icon(_torchOn ? Icons.flash_on : Icons.flash_off),
+          if (Platform.isAndroid)
+            Positioned(
+              top: 48,
+              right: 16,
+              child: IconButton.filledTonal(
+                onPressed: _toggleTorch,
+                icon: Icon(_torchOn ? Icons.flash_on : Icons.flash_off),
+              ),
             ),
-          ),
           const Positioned(
             left: 24,
             right: 24,

@@ -65,14 +65,25 @@ class _ReceiptHomePageState extends State<ReceiptHomePage> {
     if (_segments.isEmpty || _isSaving) return;
     setState(() => _isSaving = true);
     try {
-      final result = await SaverGallery.saveImage(
-        await _stitcher.stitch(_segments),
-        fileName: 'receipt-${DateTime.now().millisecondsSinceEpoch}.jpg',
-        albumPath: 'Receipt Scanner',
-        skipIfExists: false,
-      );
-      if (!result.isSuccess) throw Exception(result.errorMessage);
-      if (mounted) _message('Receipt image saved to the gallery.');
+      final bytes = await _stitcher.stitch(_segments);
+      if (Platform.isAndroid) {
+        final result = await SaverGallery.saveImage(
+          bytes,
+          fileName: 'receipt-${DateTime.now().millisecondsSinceEpoch}.jpg',
+          albumPath: 'Receipt Scanner',
+          skipIfExists: false,
+        );
+        if (!result.isSuccess) throw Exception(result.errorMessage);
+        if (mounted) _message('Receipt image saved to the gallery.');
+      } else {
+        final location = await getSaveLocation(
+          suggestedName: 'receipt-${DateTime.now().millisecondsSinceEpoch}.jpg',
+        );
+        final path = location?.path;
+        if (path == null) return;
+        await File(path).writeAsBytes(bytes);
+        if (mounted) _message('Receipt image saved.');
+      }
     } catch (_) {
       if (mounted) _message('Could not save the receipt image.');
     } finally {
@@ -153,7 +164,7 @@ class _ReceiptHomePageState extends State<ReceiptHomePage> {
               spacing: 12,
               runSpacing: 12,
               children: [
-                if (Platform.isAndroid)
+                if (Platform.isAndroid || Platform.isLinux)
                   FilledButton.icon(
                     onPressed: _isProcessing ? null : _openCamera,
                     icon: const Icon(Icons.camera_alt),

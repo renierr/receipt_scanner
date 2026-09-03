@@ -2,14 +2,14 @@
 
 A standalone Flutter app for scanning long receipts and extracting their text.
 
-On Android, the app keeps the camera open while you capture overlapping receipt sections. It detects and removes repeated lines between adjacent photos, then shows the combined OCR result. Images can also be imported from the device or desktop.
+On Android and Linux, the app keeps the camera open while you capture overlapping receipt sections. It detects and removes repeated lines between adjacent photos, then shows the combined OCR result. Images can also be imported from the device or desktop.
 
 ## Features
 
-- Capture multiple receipt sections with the Android camera
+- Capture multiple receipt sections with the camera on Android and Linux
 - Visual overlap guide for consecutive photos
 - Import JPG, JPEG, PNG, and WebP images
-- On-device Latin-script OCR via Google ML Kit
+- On-device OCR via Google ML Kit (Android) and Tesseract (Linux)
 - Automatic removal of repeated text between adjacent sections
 - Copyable extracted text
 
@@ -17,7 +17,10 @@ On Android, the app keeps the camera open while you capture overlapping receipt 
 
 - Flutter 3.47.2 or a compatible stable SDK
 - Android SDK for Android builds
-- Linux desktop development dependencies for Linux builds
+- Linux desktop development dependencies plus camera and OCR system
+  libraries for Linux builds:
+  - Arch: `sudo pacman -S gstreamer gst-plugins-base gst-plugins-good tesseract tesseract-data-eng`
+  - Debian/Ubuntu: `sudo apt install libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev gstreamer1.0-plugins-good tesseract-ocr tesseract-ocr-eng`
 
 Install dependencies before running or building the app:
 
@@ -27,13 +30,11 @@ flutter pub get
 
 ## Run
 
-Run the app on a connected Android device or emulator:
+Run the app on a connected Android device or emulator, or on Linux desktop:
 
 ```bash
 flutter run
 ```
-
-OCR is currently available on Android. On Linux, images can be imported but text extraction is not available.
 
 ## Build
 
@@ -94,4 +95,4 @@ Remove the local installation with:
 
 ## Privacy
 
-Text recognition runs on-device through Google ML Kit. Captured images and extracted text stay on the device unless you share them yourself.
+Text recognition runs on-device: Google ML Kit on Android and Tesseract OCR on Linux. Captured images and extracted text stay on the device unless you share them yourself.
